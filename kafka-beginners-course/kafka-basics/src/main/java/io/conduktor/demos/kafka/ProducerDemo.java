@@ -23,9 +23,12 @@ public class ProducerDemo {
         properties.setProperty("bootstrap.servers", "enabling-bedbug-5399-us1-kafka.upstash.io:9092");
         properties.setProperty("sasl.mechanism", "SCRAM-SHA-256");
         properties.setProperty("security.protocol", "SASL_SSL");
-        properties.setProperty("sasl.jaas.config", "org.apache.kafka.common.security.scram.ScramLoginModule required");
-        properties.setProperty("username", "\"ZW5hYmxpbmctYmVkYnVnLTUzOTkkIQFZV2j4jzjVMilYT-sue6b4KOx-iN69jQs\"");
-        properties.setProperty("password", "\"OGFlNTFhYmMtNjM2NS00NWQ1LWFlMGUtMTYzZjI5OTBkZGFk\"");
+        properties.setProperty("sasl.jaas.config", "org.apache.kafka.common.security.scram.ScramLoginModule required " +
+                "username=\"ZW5hYmxpbmctYmVkYnVnLTUzOTkkIQFZV2j4jzjVMilYT-sue6b4KOx-iN69jQs\" " +
+                "password=\"OGFlNTFhYmMtNjM2NS00NWQ1LWFlMGUtMTYzZjI5OTBkZGFk\";");
+
+//        properties.setProperty("username", "\"ZW5hYmxpbmctYmVkYnVnLTUzOTkkIQFZV2j4jzjVMilYT-sue6b4KOx-iN69jQs\"");
+//        properties.setProperty("password", "\"OGFlNTFhYmMtNjM2NS00NWQ1LWFlMGUtMTYzZjI5OTBkZGFk\"");
 
         //set properties for producer
         properties.setProperty("key.serializer", StringSerializer.class.getName());
@@ -34,11 +37,15 @@ public class ProducerDemo {
         //create kafka producer and producer record
         KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(properties);
         ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "hello world");
-        //create the Producer
 
-        //send data
+        //send data --asynchronous
+        kafkaProducer.send(producerRecord);
+
+        //tell the producer to send all data and block until done -- synchronous
+        kafkaProducer.flush();
 
         //flush and close the producer
+        kafkaProducer.close(); //when call close(), it will also call flush()
 
     }
 }
