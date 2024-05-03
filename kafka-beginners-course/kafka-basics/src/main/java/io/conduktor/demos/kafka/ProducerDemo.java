@@ -1,5 +1,7 @@
 package io.conduktor.demos.kafka;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,9 @@ public class ProducerDemo {
         properties.setProperty("key.serializer", StringSerializer.class.getName());
         properties.setProperty("value.serializer", StringSerializer.class.getName());
 
+        //create kafka producer and producer record
+        KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(properties);
+        ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "hello world");
         //create the Producer
 
         //send data
