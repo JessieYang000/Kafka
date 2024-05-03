@@ -1,9 +1,6 @@
 package io.conduktor.demos.kafka;
 
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +9,7 @@ import java.util.Properties;
 
 public class ProducerDemoWithCallback {
     private static final Logger log = LoggerFactory.getLogger(ProducerDemoWithCallback.class.getSimpleName());
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         log.info("I am a kafka Producer！");
 
         //create Producer Properties
@@ -36,30 +33,42 @@ public class ProducerDemoWithCallback {
         properties.setProperty("key.serializer", StringSerializer.class.getName());
         properties.setProperty("value.serializer", StringSerializer.class.getName());
 
+        properties.setProperty("batch.size", "400");
+        //set the partitioner to round robin, but not recommended
+//        properties.setProperty("partitioner.class", RoundRobinPartitioner.class.getName());
+
         //create kafka producer and producer record
         KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(properties);
 
-        for (int i = 0; i < 10; i++) {
-            ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "hello world with Callback" + i);
+        for(int j = 0; j < 10; j++) {
+            for (int i = 0; i < 30; i++) {
+                ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "hello world with Callback" + i);
 
-            //send data --asynchronous
-            kafkaProducer.send(producerRecord, new Callback() {
-                public void onCompletion(RecordMetadata metadata, Exception e) {
-                    // executes every time a record is successfully sent or an exception is thrown
-                    if (e == null) {
-                        //the record was successfully sent
-                        log.info("Received new metadata \n" +
-                                "Topic: " + metadata.topic() + "\n" +
-                                "Partitions: " + metadata.partition() + "\n" +
-                                "Offset: " + metadata.offset() + "\n" +
-                                "Timestamp: " + metadata.timestamp() + ";"
-                        );
-                    } else {
-                        log.error("Error while producing", e);
+                //send data --asynchronous
+                kafkaProducer.send(producerRecord, new Callback() {
+                    public void onCompletion(RecordMetadata metadata, Exception e) {
+                        // executes every time a record is successfully sent or an exception is thrown
+                        if (e == null) {
+                            //the record was successfully sent
+                            log.info("Received new metadata \n" +
+                                    "Topic: " + metadata.topic() + "\n" +
+                                    "Partitions: " + metadata.partition() + "\n" +
+                                    "Offset: " + metadata.offset() + "\n" +
+                                    "Timestamp: " + metadata.timestamp() + ";"
+                            );
+                        } else {
+                            log.error("Error while producing", e);
+                        }
                     }
-                }
-            });
+                });
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+
 
 
         //tell the producer to send all data and block until done -- synchronous
