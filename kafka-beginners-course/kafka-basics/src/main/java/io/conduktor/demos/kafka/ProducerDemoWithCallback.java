@@ -38,25 +38,29 @@ public class ProducerDemoWithCallback {
 
         //create kafka producer and producer record
         KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(properties);
-        ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "hello world with Callback");
 
-        //send data --asynchronous
-        kafkaProducer.send(producerRecord, new Callback() {
-            public void onCompletion(RecordMetadata metadata, Exception e) {
-                // executes every time a record is successfully sent or an exception is thrown
-                if (e == null) {
-                    //the record was successfully sent
-                    log.info("Received new metadata \n" +
-                            "Topic: " + metadata.topic() + "\n" +
-                            "Partitions: " + metadata.partition() + "\n" +
-                            "Offset: " + metadata.offset() + "\n" +
-                            "Timestamp: " + metadata.timestamp() + ";"
-                            );
-                } else {
-                    log.error("Error while producing", e);
+        for (int i = 0; i < 10; i++) {
+            ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "hello world with Callback" + i);
+
+            //send data --asynchronous
+            kafkaProducer.send(producerRecord, new Callback() {
+                public void onCompletion(RecordMetadata metadata, Exception e) {
+                    // executes every time a record is successfully sent or an exception is thrown
+                    if (e == null) {
+                        //the record was successfully sent
+                        log.info("Received new metadata \n" +
+                                "Topic: " + metadata.topic() + "\n" +
+                                "Partitions: " + metadata.partition() + "\n" +
+                                "Offset: " + metadata.offset() + "\n" +
+                                "Timestamp: " + metadata.timestamp() + ";"
+                        );
+                    } else {
+                        log.error("Error while producing", e);
+                    }
                 }
-            }
-        });
+            });
+        }
+
 
         //tell the producer to send all data and block until done -- synchronous
         kafkaProducer.flush();
