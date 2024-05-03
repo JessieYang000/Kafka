@@ -40,3 +40,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+playground.config
+docker-compose.yml
