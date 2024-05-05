@@ -42,3 +42,4 @@ bin/
 .DS_Store
 playground.config
 docker-compose.yml
+config.properties
