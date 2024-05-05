@@ -19,7 +19,7 @@ public class ProducerDemo {
 
         //create Producer Properties
         Properties properties = new Properties();
-        String path = "config.properties";// Relative path to config.properties from the current Java file
+        String path = "config.properties";// path to config.properties from the current working directory
         try (InputStream input = new FileInputStream(path)) {
             properties.load(input);
         } catch (IOException ex) {
