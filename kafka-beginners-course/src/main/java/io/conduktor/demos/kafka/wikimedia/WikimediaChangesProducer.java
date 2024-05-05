@@ -1,12 +1,10 @@
 package io.conduktor.demos.kafka.wikimedia;
 
+import com.launchdarkly.eventsource.EventHandler;
 import com.launchdarkly.eventsource.EventSource;
-import com.launchdarkly.eventsource.StreamException;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.beans.EventHandler;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,24 +26,18 @@ public class WikimediaChangesProducer {
         properties.setProperty("key.serializer", StringSerializer.class.getName());
         properties.setProperty("value.serializer", StringSerializer.class.getName());
 
-        //create kafka producer and producer record
+        //create kafka producer and producer
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
 
         String topic = "wikimedia.recentchange";
 
-        EventHandler eventHandler = TODO;
+        EventHandler eventHandler = new WikimediaChangeHandler(producer, topic);
 
         String url = "https://stream.wikimedia.org/v2/stream/recentchange";
         EventSource.Builder builder = new EventSource.Builder(eventHandler, URI.create(url));
         EventSource eventSource = builder.build();
 
         //start the producer in another thread
-        try {
-            eventSource.start();
-        } catch (StreamException e) {
-            throw new RuntimeException(e);
-        }
-
-
+        eventSource.start();
     }
 }
