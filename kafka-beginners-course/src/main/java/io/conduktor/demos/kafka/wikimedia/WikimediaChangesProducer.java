@@ -10,9 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 public class WikimediaChangesProducer {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         //create Producer Properties
         Properties properties = new Properties();
         String path = "config.properties";// path to config.properties from the current working directory
@@ -39,5 +40,8 @@ public class WikimediaChangesProducer {
 
         //start the producer in another thread
         eventSource.start();
+
+        //we produce for 10 minutes and block the program until then
+        TimeUnit.MINUTES.sleep(10);
     }
 }
