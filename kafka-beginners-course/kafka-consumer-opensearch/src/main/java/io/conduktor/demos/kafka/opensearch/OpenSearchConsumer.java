@@ -1,5 +1,6 @@
 package io.conduktor.demos.kafka.opensearch;
 
+import com.google.gson.JsonParser;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -84,6 +85,15 @@ public class OpenSearchConsumer {
         //create a consumer
         return new KafkaConsumer<>(properties);
     }
+
+    private static String extractId(String json) {
+        return JsonParser.parseString(json)
+                .getAsJsonObject()
+                .get("meta")
+                .getAsJsonObject()
+                .get("id")
+                .getAsString();
+    }
     public static void main(String[] args) throws IOException {
 
         Logger log = LoggerFactory.getLogger(OpenSearchConsumer.class.getSimpleName());
@@ -113,11 +123,18 @@ public class OpenSearchConsumer {
                 int recordCount = records.count();
                 log.info("Received " + recordCount + " record(s).");
 
+                //send the record to the OpenSearch one by one
                 for(ConsumerRecord<String, String> record : records) {
+                    //strategy 1: define an ID using the Kafka record coordinates
+//                        String id = record.topic() + "_" + record.partition() + "_" + record.offset();
+
                     try {
-                        //send the record to the OpenSearch
+                         //strategy 2: define an ID by extracting from the record value
+                        String id = extractId(record.value());
+
                         IndexRequest indexRequest = new IndexRequest("wikimedia")
-                                .source(record.value(), XContentType.JSON);
+                                .source(record.value(), XContentType.JSON)
+                                .id(id);
 
                         IndexResponse indexResponse = openSearchClient.index(indexRequest, RequestOptions.DEFAULT);
                         log.info(indexResponse.getId());
