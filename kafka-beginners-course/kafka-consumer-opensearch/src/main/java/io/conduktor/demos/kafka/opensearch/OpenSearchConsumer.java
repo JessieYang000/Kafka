@@ -10,6 +10,7 @@ import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.indices.CreateIndexRequest;
 import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.client.indices.GetIndexRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,8 +58,14 @@ public class OpenSearchConsumer {
 
         //we need to create the index on OpenSearch if it doesn't exist
         try(openSearchClient) {
-            CreateIndexRequest createIndexRequest = new CreateIndexRequest("wikimedia");
-            openSearchClient.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+            boolean indexExists = openSearchClient.indices().exists(new GetIndexRequest("wikimedia"), RequestOptions.DEFAULT);
+            if (!indexExists) {
+                CreateIndexRequest createIndexRequest = new CreateIndexRequest("wikimedia");
+                openSearchClient.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+                log.info("The wikimedia Index has been created.");
+            } else {
+                log.info("The wikimedia Index has already exist.");
+            }
         }
 
         //create the Kafka client
