@@ -7,6 +7,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -81,6 +82,7 @@ public class OpenSearchConsumer {
         properties.setProperty("group.id", groupId);
 
         properties.setProperty("auto.offset.reset", "latest"); //there are another two options: none and latest
+        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         //create a consumer
         return new KafkaConsumer<>(properties);
@@ -137,11 +139,15 @@ public class OpenSearchConsumer {
                                 .id(id);
 
                         IndexResponse indexResponse = openSearchClient.index(indexRequest, RequestOptions.DEFAULT);
-                        log.info(indexResponse.getId());
+//                        log.info(indexResponse.getId());
                     } catch (Exception e) {
 
                     }
                 }
+                //commit offsets after the batch is consumed
+                consumer.commitSync();
+                log.info("Offsets have been committed!");
+
             }
         }
 
