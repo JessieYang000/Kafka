@@ -6,9 +6,14 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
+import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestClient;
+import org.opensearch.client.indices.CreateIndexRequest;
 import org.opensearch.client.RestHighLevelClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 
 public class OpenSearchConsumer {
@@ -44,9 +49,18 @@ public class OpenSearchConsumer {
 
         return restHighLevelClient;
     }
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+
+        Logger log = LoggerFactory.getLogger(OpenSearchConsumer.class.getSimpleName());
         //create the Open Search client
         RestHighLevelClient openSearchClient = createOpenSearchClient();
+
+        //we need to create the index on OpenSearch if it doesn't exist
+        try(openSearchClient) {
+            CreateIndexRequest createIndexRequest = new CreateIndexRequest("wikimedia");
+            openSearchClient.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+        }
+
         //create the Kafka client
 
         //main code logic
