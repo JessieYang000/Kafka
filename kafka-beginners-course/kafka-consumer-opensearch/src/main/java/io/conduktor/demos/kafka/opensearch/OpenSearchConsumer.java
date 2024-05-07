@@ -11,6 +11,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.bulk.BulkResponse;
@@ -107,6 +108,24 @@ public class OpenSearchConsumer {
         //create the Kafka client
         KafkaConsumer<String, String> consumer = createKafkaConsumer();
 
+        // get a reference to the main thread
+        final Thread mainThread = Thread.currentThread();
+
+        // add the shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                log.info("Detected a shutdown, let's exit by calling consumer.wakeup()...");
+                consumer.wakeup(); // the next time we do consumer.poll(), a wakeup exception will be thrown
+
+                //join the main thread to allow the execution of the code in the main thread
+                try {
+                    mainThread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         //main code logic
         //we need to create the index on OpenSearch if it doesn't exist
         try(openSearchClient; consumer) {
@@ -158,7 +177,7 @@ public class OpenSearchConsumer {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                        e.printStackTrace();
                     }
 
                     //commit offsets after the batch is consumed
@@ -168,8 +187,14 @@ public class OpenSearchConsumer {
 
 
             }
+        } catch (WakeupException e) {
+            log.info("Consumer is starting to shutdown");
+        } catch (Exception e) {
+            log.error("Unexpected exception in the consumer", e);
+        } finally {
+            consumer.close(); // close the consumer, this will also commit the offsets
+            openSearchClient.close();
+            log.info("The consumer is gracefully shutdown now");
         }
-
-        //close things
     }
 }
